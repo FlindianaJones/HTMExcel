@@ -1,0 +1,36 @@
+.row {
+  height: 37px;
+}
+
+.cell {
+  width: 125px;
+  border-bottom: 1px solid gray;
+  border-right: 1px solid gray;
+  text-align: center;
+  padding: 8px;
+  display: inline-block;
+}
+
+.header {
+  font-weight: bolder;
+}
+
+.test {
+  border: 2px solid red;
+}
+
+.inlineEdit {
+  width: 100px;
+}
+
+.total {
+  font-style: italic;
+}
+
+.edited {
+  background-color: gold;
+}
+
+.FableTable {
+  width: 4700px;
+}
