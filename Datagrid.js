@@ -1,7 +1,7 @@
 $(function(){
   const todaysData = data(526, 33);
-  generateHeader(weeklyData);
-  generateGrid(todaysData);
+	generateHeader(weeklyData);
+  generateGrid(todaysData, weeklyData);
 })
 
 function generateHeader(headerData) {
@@ -10,10 +10,10 @@ function generateHeader(headerData) {
     headerData.forEach((val) => {
       $('.FableTable .header').append('<div class="cell">'+(new Date(val.WeekDate).toLocaleDateString())+'</div>');
     });
-  }
+  } //TODO: error handling? 
 }
 
-function generateGrid(gridData) {
+function generateGrid(gridData, headerData) {
   if(gridData.length > 0) {
     $('.FableTable').append('<div class="row totals"></div>');
     $('.FableTable').append('<div class="row"></div>');
@@ -21,23 +21,27 @@ function generateGrid(gridData) {
     const fields = Object.keys(gridData[0]);
     gridData.forEach(function(rowVal, row) {
       const id = rowVal.FCP;
-      $('.FableTable').append('<div class="row" data-rowIndex="'+row+'" data-id="'+id+'"></div>');
-      let rowText = '';
+      let baseRowText = '<div class="row" data-rowIndex="'+row+'" data-id="'+id+'" data-rowTotal="';
+      let innerRowText = '';
+      let rowTotal = 0;
+      
       fields.forEach((field, col) => {
         //TODO: create way to filter these less...hardcoded style
         if(field != 'Capacity' && field != 'FCP' && field != 'Priority'){
-          rowText += '<div class="cell datacell" data-field="'+field+'">'+rowVal[field]+'</div>';
+          innerRowText += '<div class="cell datacell" data-field="'+field+'" data-FCP="'+ id +'" data-orderDate="' + headerData[col - 1].WeekDate + '" data-originalValue="' + rowVal[field] + '">'+rowVal[field]+'</div>';
+          rowTotal += parseInt(rowVal[field]);
         }
       });
-      $('.row[data-rowIndex="'+row+'"][data-id="'+id+'"]').append(rowText);
+      baseRowText += rowTotal + '">';
+      let rowText = baseRowText + innerRowText + '</div>';
+      $('.FableTable').append(rowText);
     });
     totalUpdate(gridData);
   }
   
-  $('.cell').on('click', (event) => {
+  $('.datacell').on('click', (event) => {
     let cell = $(event.target);
     let cellVal = cell.text();
-    cell.attr('data-prev', cellVal);
     cell.text('');
     cell.append('<input type="text" value="'+cellVal+'" class="inlineEdit" />');
     $('.inlineEdit').focus();
@@ -47,7 +51,7 @@ function generateGrid(gridData) {
     $('input').on('blur', editClose);
   });
   
-   $(document).keydown(function(e) {
+   $(document).on('keydown', '.inlineEdit', function(e) {
     switch(e.which) {
         case 13: // enter
           $('.inlineEdit').trigger('focusout');
@@ -63,11 +67,14 @@ function generateGrid(gridData) {
 }
 
 function editClose(event){
-  let edit = $(event.target);
+	let edit = $(event.target);
   let editVal = edit.val() ? edit.val() : 0;
-  const oldVal = edit.parent().attr('data-prev');
+  //TODO: check for decimal/non-numeric input
+  const oldVal = edit.parent().attr('data-originalValue');
   if(oldVal !== editVal){
-    edit.parent().addClass('edited');
+  	edit.parent().addClass('edited');
+  } else {
+  	edit.parent().removeClass('edited');
   }
   const editedField = edit.parent().attr('data-field');
   edit.parent().text(editVal);
@@ -76,7 +83,7 @@ function editClose(event){
 
 //TODO: Not a huge fan of using deltas, but addmittedly is much faster
 function totalUpdate(dataset, col, delta) {
-  if(dataset){
+	if(dataset){
     const fields = Object.keys(dataset[0]);
     //TODO: don't use index assumptions, re-figure out how to map columns to dates
     fields.forEach((field, index) => {
@@ -89,9 +96,9 @@ function totalUpdate(dataset, col, delta) {
       }
     });
   } else {
-    const currTotal = parseInt($('.totals .total[data-field="'+col+'"] .allocation-total').text());
+  	const currTotal = parseInt($('.total[data-field="'+col+'"] .allocation-total').text());
     const newTotal = currTotal + delta;
-    $('.totals .total[data-field="'+col+'"]').text(newTotal);
+    $('.total[data-field="'+col+'"] .allocation-total').text(newTotal);
   }
 }
 
@@ -272,12 +279,12 @@ var weeklyData = [
          ]
 
 const data = (rows, cols) => {
-  let retVal = [];
-  for(let r = 0; r < rows; r++){
-    let newVal = {
-      FCP: 'FU0' + r
+	let retVal = [];
+	for(let r = 0; r < rows; r++){
+  	let newVal = {
+    	FCP: 'FU0' + r
     };
-    for(let c = 1; c<=cols; c++){
+  	for(let c = 1; c<=cols; c++){
       newVal['Col_' + c] = Math.floor(Math.random() * 50);
     }
     retVal.push(newVal);
